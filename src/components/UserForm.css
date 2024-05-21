@@ -1,0 +1,22 @@
+.user-form {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.user-form div {
+  margin-bottom: 15px;
+}
+
+.user-form label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.user-form input {
+  width: calc(100% - 20px);
+  padding: 10px;
+}
+
+.user-form button {
+  margin-top: 10px;
+}

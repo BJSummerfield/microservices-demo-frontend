@@ -1,0 +1,6 @@
+services:
+  microservices-demo-frontend:
+    build: .
+    ports:
+      - "3000:80"
+
