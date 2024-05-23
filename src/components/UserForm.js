@@ -4,6 +4,7 @@ import { CREATE_USER, UPDATE_USER } from '../graphql/mutations';
 import './UserForm.css';
 
 const UserForm = ({ user, onClose }) => {
+  const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [birthday, setBirthday] = useState('');
   const [createUser] = useMutation(CREATE_USER);
@@ -11,17 +12,18 @@ const UserForm = ({ user, onClose }) => {
 
   useEffect(() => {
     if (user) {
-      setUsername(user.name.username);
-      setBirthday(user.birthday.birthday);
+      setEmail(user?.email);
+      setUsername(user?.name?.name);
+      setBirthday(user?.birthday?.birthday);
     }
   }, [user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (user) {
-      await updateUser({ variables: { id: user.id, username, birthday } });
+      await updateUser({ variables: { id: user.id, name: username, birthday } });
     } else {
-      await createUser({ variables: { username, birthday } });
+      await createUser({ variables: { email } });
     }
     onClose();
   };
@@ -29,14 +31,28 @@ const UserForm = ({ user, onClose }) => {
   return (
     <form onSubmit={handleSubmit} className="user-form">
       <h2>{user ? 'Edit User' : 'Create User'}</h2>
-      <div>
-        <label>Username</label>
-        <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} required />
-      </div>
-      <div>
-        <label>Birthday</label>
-        <input type="date" value={birthday} onChange={(e) => setBirthday(e.target.value)} required />
-      </div>
+      {!user && (
+        <div>
+          <label>Email</label>
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        </div>
+      )}
+      {user && (
+        <div>
+          <div>
+            <label>Email</label>
+            <input type="email" value={email} disabled />
+          </div>
+          <div>
+            <label>Name</label>
+            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
+          </div>
+          <div>
+            <label>Birthday</label>
+            <input type="date" value={birthday} onChange={(e) => setBirthday(e.target.value)} />
+          </div>
+        </div>
+      )}
       <button type="submit">Submit</button>
       <button type="button" onClick={onClose}>Cancel</button>
     </form>
@@ -44,5 +60,4 @@ const UserForm = ({ user, onClose }) => {
 };
 
 export default UserForm;
-
 

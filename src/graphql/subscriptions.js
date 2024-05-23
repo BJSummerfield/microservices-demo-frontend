@@ -6,8 +6,9 @@ export const USER_EVENTS = gql`
       type
       user {
         id
+        email
         name {
-          username
+          name
         }
         birthday {
           birthday
