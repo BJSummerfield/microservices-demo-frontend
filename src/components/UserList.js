@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
 import { GET_ALL_USERS } from '../graphql/queries';
 import { DELETE_USER } from '../graphql/mutations';
-import { USER_CREATED } from '../graphql/subscriptions';
+import { USER_UPDATES } from '../graphql/subscriptions';
 import UserForm from './UserForm';
 import './UserList.css';
 
@@ -13,33 +13,66 @@ const UserList = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   console.log('data', data);
 
+
   useEffect(() => {
-    const unsubscribe = subscribeToMore({
-      document: USER_CREATED,
+    const unsubscribeFromUserUpdates = subscribeToMore({
+      document: USER_UPDATES,
       updateQuery: (prev, { subscriptionData }) => {
+        console.log(' DATA', subscriptionData);
         if (!subscriptionData.data) return prev;
-        const newUser = subscriptionData.data.userCreated;
+        const { action, data } = subscriptionData?.data?.userUpdates;
 
-        newUser.name = newUser.name || { id: newUser.id, name: null };
-        newUser.birthday = newUser.birthday || { id: newUser.id, birthday: null }
+        switch (action) {
+          case 'userCreated': {
+            if (!data || !data.id) {
+              console.error("Invalid user data:", data);
+              return prev;
+            }
 
-        const existingUsers = prev.getAllUsers || [];
-        if (existingUsers.some(user => user.id === newUser.id)) {
-          return prev; // Prevent duplicate entries
+            data.name = data.name || { id: data.id, name: null };
+            data.birthday = data.birthday || { id: data.id, birthday: null };
+
+            if (!prev || !prev.getAllUsers) {
+              console.error("Previous data is null or invalid:", prev);
+              return {
+                getAllUsers: [data]
+              };
+            }
+
+            const existingUsers = prev.getAllUsers;
+            if (existingUsers.some(user => user.id === data.id)) {
+              return prev;
+            }
+
+            return {
+              ...prev,
+              getAllUsers: [data, ...existingUsers]
+            };
+          }
+          case 'userDeleted': {
+            if (!data) return prev;
+            const deletedUserId = data.id;
+
+            if (!deletedUserId) {
+              console.error("Received null or undefined ID for deleted user.");
+              return prev;
+            }
+
+            const existingUsers = prev.getAllUsers || [];
+            const updatedUsers = existingUsers.filter(user => user.id !== deletedUserId);
+
+            return {
+              ...prev,
+              getAllUsers: updatedUsers
+            };
+          }
         }
-
-        return {
-          ...prev,
-          getAllUsers: [newUser, ...existingUsers]
-        };
-      },
-      onError: (err) => {
-        console.error('Subscription error:', err);
-        console.error('message', err.message);
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeFromUserUpdates();
+    };
   }, [subscribeToMore]);
 
 
