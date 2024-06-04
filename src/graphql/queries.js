@@ -6,9 +6,11 @@ export const GET_ALL_USERS = gql`
       id
       email
       name {
+        id
         name
       }
       birthday {
+        id
         birthday
       }
     }
@@ -21,9 +23,11 @@ export const GET_USER = gql`
       id
       email
       name {
+        id
         name
       }
       birthday {
+        id
         birthday
       }
     }

@@ -1,56 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
 import { GET_ALL_USERS } from '../graphql/queries';
 import { DELETE_USER } from '../graphql/mutations';
-// import { USER_EVENTS } from '../graphql/subscriptions';
+import { USER_CREATED } from '../graphql/subscriptions';
 import UserForm from './UserForm';
-import MessageBox from './MessageBox';
 import './UserList.css';
 
 const UserList = () => {
-  // const { loading, error, data, subscribeToMore } = useQuery(GET_ALL_USERS);
-  const { loading, error, data } = useQuery(GET_ALL_USERS);
+  const { loading, error, data, subscribeToMore } = useQuery(GET_ALL_USERS);
   const [deleteUser] = useMutation(DELETE_USER);
   const [userFormVisible, setUserFormVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  // const [messages, setMessages] = useState([]);
+  console.log('data', data);
 
-  // useEffect(() => {
-  //   const unsubscribe = subscribeToMore({
-  //     document: USER_EVENTS,
-  //     updateQuery: (prev, { subscriptionData }) => {
-  //       if (!subscriptionData.data) return prev;
-  //       const { type, user } = subscriptionData.data.userEvent;
-  //
-  //       // Update messages state
-  //       setMessages((msgs) => [...msgs, { id: user.id, type }]);
-  //
-  //       switch (type) {
-  //         case 'USER_CREATED':
-  //           return {
-  //             ...prev,
-  //             getAllUsers: [...prev.getAllUsers, user],
-  //           };
-  //         case 'USER_UPDATED':
-  //           return {
-  //             ...prev,
-  //             getAllUsers: prev.getAllUsers.map(existingUser =>
-  //               existingUser.id === user.id ? { ...existingUser, ...user } : existingUser
-  //             ),
-  //           };
-  //         case 'USER_DELETED':
-  //           return {
-  //             ...prev,
-  //             getAllUsers: prev.getAllUsers.filter(existingUser => existingUser.id !== user.id),
-  //           };
-  //         default:
-  //           return prev;
-  //       }
-  //     },
-  //   });
-  //
-  //   return () => unsubscribe();
-  // }, [subscribeToMore]);
+  useEffect(() => {
+    const unsubscribe = subscribeToMore({
+      document: USER_CREATED,
+      updateQuery: (prev, { subscriptionData }) => {
+        if (!subscriptionData.data) return prev;
+        const newUser = subscriptionData.data.userCreated;
+
+        newUser.name = newUser.name || { id: newUser.id, name: null };
+        newUser.birthday = newUser.birthday || { id: newUser.id, birthday: null }
+
+        const existingUsers = prev.getAllUsers || [];
+        if (existingUsers.some(user => user.id === newUser.id)) {
+          return prev; // Prevent duplicate entries
+        }
+
+        return {
+          ...prev,
+          getAllUsers: [newUser, ...existingUsers]
+        };
+      },
+      onError: (err) => {
+        console.error('Subscription error:', err);
+        console.error('message', err.message);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [subscribeToMore]);
+
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error :(</p>;
@@ -77,7 +68,6 @@ const UserList = () => {
     return string;
   }
 
-  // <MessageBox messages={messages} />
   return (
     <div className="user-list">
       <h1>Users</h1>

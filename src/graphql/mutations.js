@@ -15,9 +15,11 @@ export const UPDATE_USER = gql`
       id
       email
       name {
+        id
         name
       }
       birthday {
+        id
         birthday
       }
     }
