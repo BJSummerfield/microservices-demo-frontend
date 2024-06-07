@@ -9,19 +9,20 @@ export const CREATE_USER = gql`
   }
 `;
 
-export const UPDATE_USER = gql`
-  mutation UpdateUser($id: ID!, $name: String, $birthday: String) {
-    updateUser(id: $id, name: $name, birthday: $birthday) {
+export const UPDATE_NAME = gql`
+  mutation UpdateName($id: ID!, $name: String!) {
+    updateName(id: $id, name: $name) {
       id
-      email
-      name {
-        id
-        name
-      }
-      birthday {
-        id
-        birthday
-      }
+      name
+    }
+  }
+`;
+
+export const UPDATE_BIRTHDAY = gql`
+  mutation UpdateBirthday($id: ID!, $birthday: String!) {
+    updateBirthday(id: $id, birthday: $birthday) {
+      id
+      birthday
     }
   }
 `;

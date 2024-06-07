@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation } from '@apollo/client';
-import { CREATE_USER, UPDATE_USER } from '../graphql/mutations';
+import { CREATE_USER, UPDATE_NAME, UPDATE_BIRTHDAY } from '../graphql/mutations';
 import './UserForm.css';
 
 const UserForm = ({ user, onClose }) => {
@@ -8,7 +8,8 @@ const UserForm = ({ user, onClose }) => {
   const [username, setUsername] = useState('');
   const [birthday, setBirthday] = useState('');
   const [createUser] = useMutation(CREATE_USER);
-  const [updateUser] = useMutation(UPDATE_USER);
+  const [updateName] = useMutation(UPDATE_NAME);
+  const [updateBirthday] = useMutation(UPDATE_BIRTHDAY);
 
   useEffect(() => {
     if (user) {
@@ -21,7 +22,14 @@ const UserForm = ({ user, onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (user) {
-      await updateUser({ variables: { id: user.id, name: username, birthday } });
+      const updates = [];
+      if (username !== user.name?.name) {
+        updates.push(updateName({ variables: { id: user.id, name: username } }));
+      }
+      if (birthday !== user.birthday?.birthday) {
+        updates.push(updateBirthday({ variables: { id: user.id, birthday } }));
+      }
+      await Promise.all(updates);
     } else {
       await createUser({ variables: { email } });
     }
@@ -60,4 +68,3 @@ const UserForm = ({ user, onClose }) => {
 };
 
 export default UserForm;
-
