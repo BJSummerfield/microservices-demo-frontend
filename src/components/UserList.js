@@ -1,80 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
 import { GET_ALL_USERS } from '../graphql/queries';
 import { DELETE_USER } from '../graphql/mutations';
-import { USER_UPDATES } from '../graphql/subscriptions';
+import { useUserUpdates } from '../hooks/useUserUpdates';
 import UserForm from './UserForm';
 import './UserList.css';
 
 const UserList = () => {
   const { loading, error, data, subscribeToMore } = useQuery(GET_ALL_USERS);
+  useUserUpdates(subscribeToMore);
   const [deleteUser] = useMutation(DELETE_USER);
   const [userFormVisible, setUserFormVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   console.log('data', data);
-
-
-  useEffect(() => {
-    const unsubscribeFromUserUpdates = subscribeToMore({
-      document: USER_UPDATES,
-      updateQuery: (prev, { subscriptionData }) => {
-        console.log(' DATA', subscriptionData);
-        if (!subscriptionData.data) return prev;
-        const { action, data } = subscriptionData?.data?.userUpdates;
-
-        switch (action) {
-          case 'userCreated': {
-            if (!data || !data.id) {
-              console.error("Invalid user data:", data);
-              return prev;
-            }
-
-            data.name = data.name || { id: data.id, name: null };
-            data.birthday = data.birthday || { id: data.id, birthday: null };
-
-            if (!prev || !prev.getAllUsers) {
-              console.error("Previous data is null or invalid:", prev);
-              return {
-                getAllUsers: [data]
-              };
-            }
-
-            const existingUsers = prev.getAllUsers;
-            if (existingUsers.some(user => user.id === data.id)) {
-              return prev;
-            }
-
-            return {
-              ...prev,
-              getAllUsers: [data, ...existingUsers]
-            };
-          }
-          case 'userDeleted': {
-            if (!data) return prev;
-            const deletedUserId = data.id;
-
-            if (!deletedUserId) {
-              console.error("Received null or undefined ID for deleted user.");
-              return prev;
-            }
-
-            const existingUsers = prev.getAllUsers || [];
-            const updatedUsers = existingUsers.filter(user => user.id !== deletedUserId);
-
-            return {
-              ...prev,
-              getAllUsers: updatedUsers
-            };
-          }
-        }
-      }
-    });
-
-    return () => {
-      unsubscribeFromUserUpdates();
-    };
-  }, [subscribeToMore]);
-
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error :(</p>;
