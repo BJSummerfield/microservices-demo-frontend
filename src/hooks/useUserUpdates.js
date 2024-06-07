@@ -65,6 +65,7 @@ const handleUserDeleted = (cache, data) => {
     console.error("Received null or undefined ID for deleted user.");
     return;
   }
+
   cache.modify({
     fields: {
       getAllUsers(existingUserRefs = [], { readField }) {
@@ -74,6 +75,15 @@ const handleUserDeleted = (cache, data) => {
       }
     }
   });
+
+  // Evict user from the cache manually evict their orphaned id's
+  const userIdent = cache.identify({ __typename: 'User', id: data.id });
+  const nameIdent = cache.identify({ __typename: 'Name', id: data.id });
+  const birthdayIdent = cache.identify({ __typename: 'Birthday', id: data.id });
+
+  if (userIdent) cache.evict({ id: userIdent });
+  if (nameIdent) cache.evict({ id: nameIdent });
+  if (birthdayIdent) cache.evict({ id: birthdayIdent });
 };
 
 const handleBirthdayUpdated = (prev, data) => {
